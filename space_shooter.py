@@ -30,23 +30,28 @@ bullets = []
 
 # Enemy settings
 enemy_width, enemy_height = 40, 30
-enemy_rows = 3
-enemy_cols = 8
 enemy_padding = 10
 enemy_speed = 3
 enemies = []
 enemy_direction = 1
 
 # Create enemies
-start_x = 50
-start_y = 50
-for row in range(enemy_rows):
-    for col in range(enemy_cols):
-        x = start_x + col * (enemy_width + enemy_padding)
-        y = start_y + row * (enemy_height + enemy_padding)
-        enemies.append(pygame.Rect(x, y, enemy_width, enemy_height))
+def create_enemies(rows, cols, speed):
+    global enemies, enemy_speed
+    start_x = 50
+    start_y = 50
+    enemies = []
+    enemy_speed = speed
+    for row in range(rows):
+        for col in range(cols):
+            x = start_x + col * (enemy_width + enemy_padding)
+            y = start_y + row * (enemy_height + enemy_padding)
+            enemies.append(pygame.Rect(x, y, enemy_width, enemy_height))
+
+create_enemies(3, 8, enemy_speed)
 
 score = 0
+level = 1
 
 running = True
 while running:
@@ -94,6 +99,11 @@ while running:
                 score +=10
                 break
 
+    # Check if all enemies are destroyed
+    if not enemies:
+        level += 1
+        create_enemies(3 + level, 8, enemy_speed + level // 2) # More rows, greater speeds
+
     # Draw bullets
     for bullet in bullets:
         pygame.draw.rect(screen, WHITE, bullet)
@@ -105,7 +115,7 @@ while running:
     pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
 
     # Display score
-    score_text = font.render(f"Score: {score}", True, GREEN)
+    score_text = font.render(f"Score: {score} Level: {level}", True, GREEN)
     screen.blit(score_text, (10, 10))
 
     pygame.display.flip()
