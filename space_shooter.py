@@ -140,10 +140,19 @@ def main_game():
                     score +=10
                     break
 
+        # Collisions with enemies
+        for enemy in enemies[:]:
+            player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+            if player_rect.colliderect(enemy) or enemy.y > HEIGHT:
+                enemies.remove(enemy)
+                lives -= 1
+                if lives == 0:
+                    display_end_screen("Game Over")
+
         # Check if all enemies are destroyed
         if not enemies:
             level += 1
-            if level > 2: # End game at level 2
+            if level > 5: # End game at level 5
                 display_end_screen("Victory!")
             create_enemies(3 + level, 8, enemy_speed + level // 2) # More rows, greater speeds
 
