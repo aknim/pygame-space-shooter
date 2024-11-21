@@ -8,11 +8,14 @@ WIDTH, HEIGHT = 800, 600
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Space Shooter")
 
 clock = pygame.time.Clock()
+
+font = pygame.font.SysFont("Arial", 24)
 
 # Player settings
 player_width, player_height = 50, 20
@@ -43,6 +46,7 @@ for row in range(enemy_rows):
         y = start_y + row * (enemy_height + enemy_padding)
         enemies.append(pygame.Rect(x, y, enemy_width, enemy_height))
 
+score = 0
 
 running = True
 while running:
@@ -87,6 +91,7 @@ while running:
             if bullet.colliderect(enemy):
                 bullets.remove(bullet)
                 enemies.remove(enemy)
+                score +=10
                 break
 
     # Draw bullets
@@ -98,6 +103,10 @@ while running:
         pygame.draw.rect(screen, RED, enemy)
 
     pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
+
+    # Display score
+    score_text = font.render(f"Score: {score}", True, GREEN)
+    screen.blit(score_text, (10, 10))
 
     pygame.display.flip()
     clock.tick(60) # Limit to 60 FPS
