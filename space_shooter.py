@@ -40,9 +40,25 @@ enemy_direction = 1
 enemy_bullets = []
 enemy_bullet_speed = 5
 
+# Power-up settings
+power_up_width, power_up_height = 20, 20
+power_ups = []
+power_up_spawn_chance = 0.005 # Chance per frame to spawn a power up
+power_up_effect_duration = 300 # 5 Frames (5 seconds at 60 FPS)
+active_effect = None # Tracks active power up
+effect_timer = 0
+
 score = 0
 level = 1
 lives = 3
+
+def spawn_power_up():
+    if random.random() < power_up_spawn_chance: # Chance to spawn
+        x = random.randint(0, WIDTH - power_up_width)
+        y = random.randint(50, HEIGHT // 2) # Spawn in the upper half
+        type = random.choice(["shielf", "extra_life", "double_score"])
+        power_ups.append({"rect": pygame.Rect(x, y, power_up_width, power_up_height), "type": type})
+
 
 # Create enemies
 def create_enemies(rows, cols, speed):
@@ -84,6 +100,7 @@ def display_end_screen(message):
 
 def main_game():
     global player_x, bullets, enemies, enemy_bullets, score, level, lives, enemy_direction
+    global active_effect, effect_timer
 
     player_x = (WIDTH - player_width) // 2
     bullets = []
@@ -137,7 +154,10 @@ def main_game():
                 if bullet.colliderect(enemy):
                     bullets.remove(bullet)
                     enemies.remove(enemy)
-                    score +=10
+                    if active_effect == "double_score":
+                        score +=20 
+                    else: 
+                        score +=10
                     break
 
         # Collisions with enemies
@@ -145,9 +165,35 @@ def main_game():
             player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
             if player_rect.colliderect(enemy) or enemy.y > HEIGHT:
                 enemies.remove(enemy)
-                lives -= 1
-                if lives == 0:
-                    display_end_screen("Game Over")
+                if not active_effect == "shield":
+                    lives -= 1
+                    if lives == 0:
+                        display_end_screen("Game Over")
+
+
+        spawn_power_up()
+        # Power up collection and moving down
+        for power_up in power_ups[:]:
+            power_up["rect"].y += 2
+            if pygame.Rect(player_x, player_y, player_width, player_height).colliderect(power_up["rect"]):
+                if power_up["type"] == "shield":
+                    active_effect = "shield"
+                    effect_timer = power_up_effect_duration
+                elif power_up["type"] == "extra_life":
+                    lives += 1
+                elif power_up["type"] == "double_score":
+                    active_effect = "double_score"
+                    effect_timer = power_up_effect_duration
+                power_ups.remove(power_up)
+
+            elif power_up["rect"].y > HEIGHT:
+                power_ups.remove(power_up)
+        
+        # Decrease effect timer and clear effect when it ends
+        if effect_timer > 0:
+            effect_timer -= 1
+        else:
+            active_effect = None
 
         # Check if all enemies are destroyed
         if not enemies:
@@ -170,9 +216,12 @@ def main_game():
                 enemy_bullets.remove(enemy_bullet)
             elif enemy_bullet.colliderect(pygame.Rect(player_x, player_y, player_width, player_height)):
                 enemy_bullets.remove(enemy_bullet)
-                lives -= 1 
-                if lives == 0:
-                    display_end_screen("Game Over")
+                if not active_effect == "shield":
+                    lives -= 1 
+                    if lives == 0:
+                        display_end_screen("Game Over")
+
+        
 
         # Draw bullets
         for bullet in bullets:
@@ -185,6 +234,11 @@ def main_game():
         # Draw enemies
         for enemy in enemies:
             pygame.draw.rect(screen, RED, enemy)
+
+        # Draw power ups
+        for power_up in power_ups:
+            color = GREEN if power_up["type"] == "shield" else YELLOW if power_up["type"] == "extra_life" else RED
+            pygame.draw.rect(screen, color, power_up["rect"])
 
         pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
 
