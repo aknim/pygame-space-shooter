@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 pygame.init()
 
@@ -9,6 +10,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Space Shooter")
@@ -34,6 +36,8 @@ enemy_padding = 10
 enemy_speed = 3
 enemies = []
 enemy_direction = 1
+enemy_bullets = []
+enemy_bullet_speed = 5
 
 # Create enemies
 def create_enemies(rows, cols, speed):
@@ -52,6 +56,7 @@ create_enemies(3, 8, enemy_speed)
 
 score = 0
 level = 1
+lives = 3
 
 running = True
 while running:
@@ -104,9 +109,31 @@ while running:
         level += 1
         create_enemies(3 + level, 8, enemy_speed + level // 2) # More rows, greater speeds
 
+    # Enemy shooting
+    if random.randint(0, 100) < 2: # Small chance per frame
+        shooting_enemy = random.choice(enemies)
+        enemy_bullet_x = shooting_enemy.x + enemy_width // 2 - bullet_width // 2
+        enemy_bullet_y = shooting_enemy.y + enemy_height
+        enemy_bullets.append(pygame.Rect(enemy_bullet_x, enemy_bullet_y, bullet_width, bullet_height))
+
+    # Update enemy bullet positions
+    for enemy_bullet in enemy_bullets[:]:
+        enemy_bullet.y += enemy_bullet_speed
+        if enemy_bullet.y > HEIGHT:
+            enemy_bullets.remove(enemy_bullet)
+        elif enemy_bullet.colliderect(pygame.Rect(player_x, player_y, player_width, player_height)):
+            enemy_bullets.remove(enemy_bullet)
+            lives -= 1 
+            if lives == 0:
+                running = False
+
     # Draw bullets
     for bullet in bullets:
         pygame.draw.rect(screen, WHITE, bullet)
+
+    # Draw enemy bullets
+    for enemy_bullet in enemy_bullets:
+        pygame.draw.rect(screen, YELLOW, enemy_bullet)
 
     # Draw enemies
     for enemy in enemies:
@@ -115,7 +142,7 @@ while running:
     pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
 
     # Display score
-    score_text = font.render(f"Score: {score} Level: {level}", True, GREEN)
+    score_text = font.render(f"Score: {score} Level: {level} Lives: {lives}", True, GREEN)
     screen.blit(score_text, (10, 10))
 
     pygame.display.flip()
